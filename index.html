@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="hr">
 <head>
@@ -75,12 +74,12 @@
     <h1>CAF ➔ AUDIO PRO ENGINE</h1>
     
     <div class="notes-box">
-        <strong>Podržani formati i konverzije:</strong>
+        <strong>Napomene o formatima:</strong>
         <ul>
-            <li><strong>WAV full automatic (1:1 PCM)</strong> – ALAC/CAF → WAV PCM, bez gubitaka, multikanalno (5.1 / 7.1)</li>
-            <li><strong>AAC direct copy</strong> – brza konverzija AAC streama u .aac kontejner (samo za CAF koji sadrži AAC audio)</li>
-            <li><strong>WAV PCM (custom)</strong> – konverzija u WAV s advanced postavkama (bit depth, sample rate, kanali)</li>
-            <li><strong>MP3</strong> – kompresija, maksimalno 2 kanala. Podržava ALAC i AAC izvor.</li>
+            <li><strong>WAV full automatic (1:1 PCM) 5.1 / 7.1</strong> – najstabilnije, bez gubitaka, 4-5 puta veći file - multikanalno</li>
+            <li><strong>AAC direct copy</strong>, kao CAF, najbrža konverzija – radit će, ali će biti upitna kompatibilnost video editing softverima - multikanalno</li>
+            <li><strong>WAV PCM (custom)</strong> - konverzija u WAV s advanced postavkama - multikanalno</li>
+            <li><strong>MP3</strong> - kompresirano, podrška za samo 2 kanala</li>
         </ul>
     </div>
 
@@ -90,18 +89,18 @@
         <div class="btn-group" style="margin-bottom: 15px;">
             <button id="m-auto" onclick="setMode('auto')" style="border: 2px solid white; background: var(--blue); color: #fff;">
                 <span>WAV - FULL AUTOMATIC (1:1 PCM)</span>
-                <span class="btn-subtext">ALAC + AAC + LPCM + IMA4 | multikanalno</span>
+                <span class="btn-subtext">multikanalno</span>
             </button>
             <button id="m-copy" onclick="setMode('copy')" style="background: var(--teal); color: #111;">
-                <span>AAC - DIRECT COPY</span>
-                <span class="btn-subtext">samo CAF/AAC izvor | multikanalno</span>
+                <span>AUTO - DIRECT COPY (AAC)</span>
+                <span class="btn-subtext">multikanalno</span>
             </button>
         </div>
 
         <div class="btn-group">
             <button id="m-pcm" onclick="setMode('pcm')" style="background: var(--acc); color: #111;">
                 <span>WAV PCM (CUSTOM)</span>
-                <span class="btn-subtext">ALAC + AAC + LPCM | multikanalno</span>
+                <span class="btn-subtext">multikanalno</span>
             </button>
             <button id="m-mp3" onclick="setMode('mp3')" style="background: var(--orange); color: #111;">
                 <span>MP3 (CUSTOM)</span>
@@ -125,32 +124,66 @@
                 <div class="adv-item" id="box-bit" style="display:none;">
                     <label>Bit Depth</label>
                     <span class="desc">Samo za WAV PCM</span>
-                    <select id="adv-bit"><option value="16">16-bit PCM</option><option value="24">24-bit PCM</option><option value="32">32-bit Float</option></select>
+                    <select id="adv-bit">
+                        <option value="16">16-bit PCM</option>
+                        <option value="24">24-bit PCM</option>
+                        <option value="32">32-bit Float</option>
+                    </select>
                 </div>
                 
                 <div class="adv-item">
                     <label>Channels</label>
                     <span class="desc">Upmix / Downmix kanala</span>
-                    <select id="adv-ch"><option value="0">no change</option><option value="1">mono</option><option value="2">stereo</option></select>
+                    <select id="adv-ch">
+                        <option value="0">no change</option>
+                        <option value="1">mono</option>
+                        <option value="2">stereo</option>
+                    </select>
                 </div>
 
                 <div class="adv-item">
                     <label>Volume</label>
                     <span class="desc">Pojačanje ili stišavanje</span>
-                    <select id="adv-vol"><option value="1">no change</option><option value="1.25">+25%</option><option value="1.5">+50%</option><option value="2">+100%</option><option value="0.75">-25%</option><option value="0.5">-50%</option></select>
+                    <select id="adv-vol">
+                        <option value="1">no change</option>
+                        <option value="1.25">+25%</option>
+                        <option value="1.5">+50%</option>
+                        <option value="2">+100%</option>
+                        <option value="0.75">-25%</option>
+                        <option value="0.5">-50%</option>
+                    </select>
                 </div>
 
                 <div class="adv-item">
                     <label>Sample Rate</label>
                     <span class="desc">Frekvencija (Hz)</span>
-                    <select id="adv-hz"><option value="0">no change</option><option value="8000">8000 Hz</option><option value="11025">11025 Hz</option><option value="16000">16000 Hz</option><option value="22050">22050 Hz</option><option value="32000">32000 Hz</option><option value="44100">44100 Hz</option><option value="48000">48000 Hz</option><option value="88200">88200 Hz</option><option value="96000">96000 Hz</option></select>
+                    <select id="adv-hz">
+                        <option value="0">no change</option>
+                        <option value="8000">8000 Hz</option>
+                        <option value="11025">11025 Hz</option>
+                        <option value="16000">16000 Hz</option>
+                        <option value="22050">22050 Hz</option>
+                        <option value="32000">32000 Hz</option>
+                        <option value="44100">44100 Hz</option>
+                        <option value="48000">48000 Hz</option>
+                        <option value="88200">88200 Hz</option>
+                        <option value="96000">96000 Hz</option>
+                    </select>
                 </div>
             </div>
 
             <div class="trim-section">
                 <div class="trim-title">✂ Trim (Rezanje)</div>
-                <div class="adv-item"><label>Trim Start</label><span class="desc">Početak (HH:MM:SS ili sekunde)</span><input type="text" id="trim-start" placeholder="00:00:00"></div>
-                <div class="adv-item"><label>Trim End</label><span class="desc">Kraj (HH:MM:SS ili sekunde)</span><input type="text" id="trim-end" placeholder="00:00:00"></div>
+                <div class="adv-item">
+                    <label>Trim Start</label>
+                    <span class="desc">Početak (HH:MM:SS ili sekunde)</span>
+                    <input type="text" id="trim-start" placeholder="00:00:00">
+                </div>
+                <div class="adv-item">
+                    <label>Trim End</label>
+                    <span class="desc">Kraj (HH:MM:SS ili sekunde)</span>
+                    <input type="text" id="trim-end" placeholder="00:00:00">
+                </div>
             </div>
         </div>
     </div>
@@ -198,9 +231,15 @@
 
     function setMode(m){ 
         mode = m; 
-        document.querySelectorAll('.btn-group button').forEach(b => { b.style.border = 'none'; if(!b.disabled) b.style.opacity = '0.6'; });
+        document.querySelectorAll('.btn-group button').forEach(b => {
+            b.style.border = 'none';
+            if(!b.disabled) b.style.opacity = '0.6';
+        });
         const activeBtn = document.getElementById('m-'+m);
-        if(activeBtn) { activeBtn.style.border = '2px solid white'; activeBtn.style.opacity = '1'; }
+        if(activeBtn) {
+            activeBtn.style.border = '2px solid white';
+            activeBtn.style.opacity = '1';
+        }
         
         let isCustom = (m === 'pcm' || m === 'mp3');
         document.getElementById('adv-toggle-box').style.display = isCustom ? 'block' : 'none';
@@ -219,7 +258,8 @@
     function writeLog(m){ document.getElementById('log').value += m + "\n"; document.getElementById('log').scrollTop=99999; }
 
     function parseTimecode(tc) {
-        if(!tc) return null; let parts = tc.split(':').map(Number);
+        if(!tc) return null;
+        let parts = tc.split(':').map(Number);
         if(parts.length === 3) return (parts[0]*3600) + (parts[1]*60) + parts[2];
         if(parts.length === 2) return (parts[0]*60) + parts[1];
         if(parts.length === 1) return parts[0];
@@ -227,7 +267,14 @@
     }
 
     async function pickIn(){
-        try { inH = await window.showDirectoryPicker(); files =[]; writeLog(`[SKENIRANJE] Učitavam datoteke...`); await scan(inH, ''); document.getElementById('in-st').textContent = inH.name; document.getElementById('btn-out').disabled = false; writeLog(`[INFO] Mapirano ${files.length} datoteka.`); } catch(e) {}
+        try { 
+            inH = await window.showDirectoryPicker(); files =[]; 
+            writeLog(`[SKENIRANJE] Učitavam datoteke...`);
+            await scan(inH, ''); 
+            document.getElementById('in-st').textContent = inH.name; 
+            document.getElementById('btn-out').disabled = false; 
+            writeLog(`[INFO] Mapirano ${files.length} datoteka.`); 
+        } catch(e) {}
     }
 
     async function scan(h, p){
@@ -249,7 +296,7 @@
         writeLog("\n" + "=".repeat(100) + "\n" + " ".repeat(30) + "ZAPOČINJEM PROCES KONVERZIJE\n" + "=".repeat(100) + "\n");
         
         for(let i=0; i<files.length; i++){
-            if(pauseRequested) break;
+            if(pauseRequested) { writeLog("\n[INFO] Zaustavljeno od strane korisnika."); break; }
             let f = files[i]; if(f.done) continue;
             
             try {
@@ -261,6 +308,7 @@
                 let targetDir = outH;
                 for(let seg of f.p.split('/').filter(x=>x)) targetDir = await targetDir.getDirectoryHandle(seg, {create:true});
 
+                // SMART SKIP
                 try { await targetDir.getFileHandle(outName); writeLog(`[SKIP] Preskačem (već postoji): ${outName}`); f.done = true; processed++; updateProgress(); continue; } catch(e){}
 
                 let fileRaw = f.file;
@@ -273,7 +321,7 @@
                 let trimCmd = (sTime !== null ? ` -ss ${document.getElementById('trim-start').value}` : "") + (eTime !== null ? ` -to ${document.getElementById('trim-end').value}` : "");
 
                 if (mode === 'copy') {
-                    if(info.desc.fid === 0x616c6163) throw new Error("Direct Copy nije moguć za ALAC (Apple Lossless) format jer će ostati neprepoznat. Molimo odaberite WAV ili MP3 mod.");
+                    if(info.desc.fid === 0x616c6163) throw new Error("Direct Copy nije moguć za ALAC (Apple Lossless) format. Odaberite WAV ili MP3 mod.");
                     if(info.desc.fid !== 0x61616320) throw new Error("Direct Copy AAC radi samo ako je izvorni CAF u AAC formatu.");
                     
                     outBuffer = wrapAAC(ab, info);
@@ -303,13 +351,6 @@
                 f.done = true; processed++; updateProgress();
             } catch(e){ 
                 writeLog(`❌ GREŠKA (${f.h.name}): ${e.message}`);
-                
-                // OSIGURANJE OD LOKALNOG POKRETANJA FFMPEG-a
-                if(e.message.includes('file://')) {
-                    alert("SISTEMSKA BLOKADA: Windows Chrome ne dozvoljava otvaranje ALAC datoteka direktno s tvrdog diska.\n\nMolimo uploadajte ovaj HTML file na GitHub Pages ili ga pokrenite preko lokalnog servera (VS Code Live Server).");
-                    pauseRequested = true;
-                    break;
-                }
             }
             await new Promise(r => setTimeout(r, 10));
         }
@@ -324,38 +365,35 @@
 
         const fS = (s) => s > 1048576 ? (s/1048576).toFixed(2)+" MB" : (s/1024).toFixed(2)+" KB";
         
-        writeLog(`IZVOR: ${oN}  (${oFmt}, ${oI.desc.ch}ch, ${oI.desc.sr}Hz) ->[${fS(oS)}]`);
-        writeLog(`IZLAZ: ${nN}  (${nFmt}, ${nCh}ch, ${nSr}Hz) ->[${fS(nS)}]`);
+        writeLog(`IZVOR: ${oN}  (${oFmt}, ${oI.desc.ch}ch, ${oI.desc.sr}Hz) -> [${fS(oS)}]`);
+        writeLog(`IZLAZ: ${nN}  (${nFmt}, ${nCh}ch, ${nSr}Hz) -> [${fS(nS)}]`);
         writeLog(`FFMPEG: ${cmd}`);
         writeLog("-".repeat(100));
     }
 
-    async function runSoftwareFfmpegDecoder(ab, info, fName) {
-        if (window.location.protocol === 'file:') {
-            throw new Error("ALAC format zahtijeva FFmpeg dekoder. Chrome blokira FFmpeg kada se datoteka pokreće direktno s diska (putanja 'file://'). RJEŠENJE: Postavite aplikaciju na GitHub Pages ili pokrenite lokalni server!");
-        }
-        
+    // --- FFMPEG SINGLE-THREAD BYPASS ZA ALAC (GITHUB PAGES SAFE) ---
+    async function runSoftwareFfmpegDecoder(ab) {
         if (!window.FFmpeg) {
-            writeLog(`[PREUZIMANJE] Učitavam FFmpeg jezgru (Samo prvi put)...`);
+            writeLog(`[PREUZIMANJE] Učitavam FFmpeg Single-Thread jezgru...`);
             await new Promise((res, rej) => {
                 let script = document.createElement('script');
-                script.src = "https://unpkg.com/@ffmpeg/ffmpeg@0.9.6/dist/ffmpeg.min.js";
+                script.src = "https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js";
                 script.onload = res; script.onerror = () => rej(new Error("Neuspješno preuzimanje FFmpeg-a."));
                 document.head.appendChild(script);
             });
         }
         
         if (!window.ffmpegEngine) {
-            window.ffmpegEngine = FFmpeg.createFFmpeg({ log: false });
-        }
-        
-        if (!window.ffmpegEngine.isLoaded()) {
-            writeLog(`[INFO] Inicijaliziram FFmpeg. Ovo traje par sekundi...`);
+            window.ffmpegEngine = FFmpeg.createFFmpeg({ 
+                corePath: 'https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js',
+                log: false 
+            });
+            writeLog(`[INFO] Inicijaliziram FFmpeg...`);
             try {
                 await window.ffmpegEngine.load();
             } catch(e) {
                 window.ffmpegEngine = null; 
-                throw new Error("Neuspješno pokretanje FFmpeg jezgre. Provjerite vezu.");
+                throw new Error("Neuspješno pokretanje FFmpeg jezgre: " + e.message);
             }
         }
         
@@ -370,7 +408,7 @@
             finalBuffer = await ctx.decodeAudioData(outData.buffer);
             await ctx.close();
         } catch (e) {
-            throw new Error("FFmpeg konverzija nije uspjela. File je korumpiran.");
+            throw new Error("FFmpeg konverzija nije uspjela.");
         } finally {
             try { ffmpeg.FS('unlink', 'input.caf'); } catch(e){}
             try { ffmpeg.FS('unlink', 'output.wav'); } catch(e){}
@@ -389,36 +427,40 @@
         
         if(mode === 'mp3') tCh = Math.min(tCh, 2);
 
-        let decoded;
-        let ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: info.desc.sr });
+        let decoded = null;
 
-        try {
-            if(info.desc.fid === 0x61616320) {
-                decoded = await ctx.decodeAudioData(wrapAAC(ab, info));
-            } else if(info.desc.fid === 0x616c6163) {
-                if(ctx.state !== 'closed') await ctx.close();
-                writeLog(`[UPOZORENJE] Preglednik ne podržava nativni ALAC dekoder. Pokrećem FFmpeg Software Engine...`);
-                decoded = await runSoftwareFfmpegDecoder(ab, info, fName);
-                if(mode === 'auto') tBits = 16;
-            } else if(info.desc.fid === 0x696d6134) {
-                let pcm16 = decodeIMA4(ab, info.dataOff, info.dataSz, info.desc.ch);
-                decoded = ctx.createBuffer(info.desc.ch, pcm16.length/info.desc.ch, info.desc.sr);
-                for(let c=0; c<info.desc.ch; c++) { let chD = decoded.getChannelData(c); for(let i=0; i<decoded.length; i++) chD[i] = pcm16[i*info.desc.ch + c] / 32768; }
-                if(mode === 'auto') tBits = 16;
-            } else {
+        if(info.desc.fid === 0x616c6163) {
+            try {
+                let ctx = new (window.AudioContext || window.webkitAudioContext)();
                 decoded = await ctx.decodeAudioData(ab.slice(0));
+                await ctx.close();
+            } catch(e) {
+                writeLog(`[INFO] Aktiviram FFmpeg (Single Thread) za ALAC...`);
+                decoded = await runSoftwareFfmpegDecoder(ab);
+                if(mode === 'auto') tBits = 16;
             }
-        } catch(e) { 
-            if(ctx.state !== 'closed') await ctx.close();
-            throw e; 
+        } 
+        else {
+            let ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: info.desc.sr });
+            try {
+                if(info.desc.fid === 0x61616320) decoded = await ctx.decodeAudioData(wrapAAC(ab, info));
+                else if(info.desc.fid === 0x696d6134) {
+                    let pcm16 = decodeIMA4(ab, info.dataOff, info.dataSz, info.desc.ch);
+                    decoded = ctx.createBuffer(info.desc.ch, pcm16.length/info.desc.ch, info.desc.sr);
+                    for(let c=0; c<info.desc.ch; c++) { let chD = decoded.getChannelData(c); for(let i=0; i<decoded.length; i++) chD[i] = pcm16[i*info.desc.ch + c] / 32768; }
+                    if(mode === 'auto') tBits = 16;
+                } else {
+                    decoded = await ctx.decodeAudioData(ab.slice(0));
+                }
+            } finally {
+                if(ctx.state !== 'closed') await ctx.close();
+            }
         }
         
         let start = sTime !== null ? sTime : 0;
         let end = eTime !== null ? Math.min(eTime, decoded.duration) : decoded.duration;
         let finalDur = end - start;
         if(finalDur <= 0) finalDur = 0.1;
-
-        if(ctx.state !== 'closed') await ctx.close(); 
         
         let offCtx = new OfflineAudioContext(tCh, Math.ceil(finalDur * tSr), tSr);
         let src = offCtx.createBufferSource(); src.buffer = decoded;
