@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CAF to WAV/MP3 PRO - CS Gemini v3</title>
-    <!-- LameJS za MP3 enkripciju unutar preglednika -->
+    <title>CAF to WAV/MP3 PRO - CS - v4</title>
+    <!-- LameJS za MP3 enkripciju -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.all.min.js" crossorigin="anonymous"></script>
     <style>
         :root { --bg: #0f0f17; --fg: #cdd6f4; --acc: #a6e3a1; --acc-h: #94e2d5; --err: #f38ba8; --pnl: #1e1e2e; --blue: #89b4fa; --orange: #fab387; --teal: #89dceb; }
@@ -63,7 +63,7 @@
 <body>
 
 <div id="login-container">
-    <h1>CAF Converter PRO Gemini v3</h1>
+    <h1>CAF Converter PRO v4</h1>
     <p style="color: #a6adc8;">Professional Audio Conversion Tool</p>
     <input type="password" id="pass" class="login-input" placeholder="••••••••" onkeypress="if(event.key==='Enter') login()">
     <button style="width:100%; flex-direction: row;" onclick="login()">PRISTUPI SUSTAVU</button>
@@ -71,7 +71,7 @@
 </div>
 
 <div id="app">
-    <h1>CAF ➔ AUDIO PRO ENGINE Gemini v3</h1>
+    <h1>CAF ➔ AUDIO PRO ENGINE v4</h1>
     
     <div class="notes-box">
         <strong>Napomene o formatima:</strong>
@@ -115,6 +115,7 @@
 
         <div id="adv-panel">
             <div class="adv-grid">
+                
                 <div class="adv-item" id="box-bitrate" style="display:none;">
                     <label>Audio Bitrate</label>
                     <span class="desc">Konstantni bitrate (kbps)</span>
@@ -228,6 +229,7 @@
     }
 
     let mode = 'auto', useAdv = false, inH = null, outH = null, files =[], processed = 0, pauseRequested = false;
+    window.ffmpegRunCount = 0;
 
     function setMode(m){ 
         mode = m; 
@@ -296,7 +298,7 @@
         writeLog("\n" + "=".repeat(100) + "\n" + " ".repeat(30) + "ZAPOČINJEM PROCES KONVERZIJE\n" + "=".repeat(100) + "\n");
         
         for(let i=0; i<files.length; i++){
-            if(pauseRequested) { writeLog("\n[INFO] Zaustavljeno od strane korisnika."); break; }
+            if(pauseRequested) { writeLog("\n[INFO] Pauzirano od strane korisnika."); break; }
             let f = files[i]; if(f.done) continue;
             
             try {
@@ -308,7 +310,6 @@
                 let targetDir = outH;
                 for(let seg of f.p.split('/').filter(x=>x)) targetDir = await targetDir.getDirectoryHandle(seg, {create:true});
 
-                // SMART SKIP
                 try { await targetDir.getFileHandle(outName); writeLog(`[SKIP] Preskačem (već postoji): ${outName}`); f.done = true; processed++; updateProgress(); continue; } catch(e){}
 
                 let fileRaw = f.file;
@@ -321,7 +322,7 @@
                 let trimCmd = (sTime !== null ? ` -ss ${document.getElementById('trim-start').value}` : "") + (eTime !== null ? ` -to ${document.getElementById('trim-end').value}` : "");
 
                 if (mode === 'copy') {
-                    if(info.desc.fid === 0x616c6163) throw new Error("Direct Copy nije moguć za ALAC (Apple Lossless) format. Odaberite WAV ili MP3 mod.");
+                    if(info.desc.fid === 0x616c6163) throw new Error("Direct Copy nije moguć za ALAC (Apple Lossless) format. Molimo odaberite WAV ili MP3 mod.");
                     if(info.desc.fid !== 0x61616320) throw new Error("Direct Copy AAC radi samo ako je izvorni CAF u AAC formatu.");
                     
                     outBuffer = wrapAAC(ab, info);
@@ -365,41 +366,41 @@
 
         const fS = (s) => s > 1048576 ? (s/1048576).toFixed(2)+" MB" : (s/1024).toFixed(2)+" KB";
         
-        writeLog(`IZVOR: ${oN}  (${oFmt}, ${oI.desc.ch}ch, ${oI.desc.sr}Hz) -> [${fS(oS)}]`);
-        writeLog(`IZLAZ: ${nN}  (${nFmt}, ${nCh}ch, ${nSr}Hz) -> [${fS(nS)}]`);
-        writeLog(`FFMPEG: ${cmd}`);
+        writeLog(`IZVOR (CAF): ${oN}`);
+        writeLog(`   Format: ${oFmt} | Channels: ${oI.desc.ch} | Rate: ${oI.desc.sr}Hz | Depth: ${oI.desc.bits}-bit | Size: ${fS(oS)}`);
+        writeLog(`IZLAZ (${m === 'copy' ? 'AAC' : (m === 'mp3' ? 'MP3' : 'WAV')}): ${nN}`);
+        writeLog(`   Format: ${nFmt} | Channels: ${nCh} | Rate: ${nSr}Hz | Precision: ${m==='mp3'||m==='copy'?'Compressed':nBits+'-bit'} | Size: ${fS(nS)}`);
+        writeLog(`FFMPEG COMMAND: ${cmd}`);
         writeLog("-".repeat(100));
     }
 
-    // --- FFMPEG SINGLE-THREAD BYPASS ZA ALAC (GITHUB PAGES SAFE) ---
+    // --- FFMPEG 0.9.6 (STABILAN ZA GITHUB PAGES) ---
     async function runSoftwareFfmpegDecoder(ab) {
         if (!window.FFmpeg) {
-            writeLog(`[PREUZIMANJE] Učitavam FFmpeg Single-Thread jezgru...`);
+            writeLog(`[ALAC DECODER] Preuzimam FFmpeg.wasm jezgru...`);
             await new Promise((res, rej) => {
                 let script = document.createElement('script');
-                script.src = "https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js";
+                script.src = "https://unpkg.com/@ffmpeg/ffmpeg@0.9.6/dist/ffmpeg.min.js";
                 script.onload = res; script.onerror = () => rej(new Error("Neuspješno preuzimanje FFmpeg-a."));
                 document.head.appendChild(script);
             });
         }
         
         if (!window.ffmpegEngine) {
-            window.ffmpegEngine = FFmpeg.createFFmpeg({ 
-                corePath: 'https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js',
-                log: false 
-            });
+            window.ffmpegEngine = FFmpeg.createFFmpeg({ log: false });
             writeLog(`[INFO] Inicijaliziram FFmpeg...`);
             try {
                 await window.ffmpegEngine.load();
             } catch(e) {
                 window.ffmpegEngine = null; 
-                throw new Error("Neuspješno pokretanje FFmpeg jezgre: " + e.message);
+                throw new Error("Neuspješno pokretanje FFmpeg jezgre.");
             }
         }
         
         let ffmpeg = window.ffmpegEngine;
         let finalBuffer = null;
         try {
+            window.ffmpegRunCount++;
             ffmpeg.FS('writeFile', 'input.caf', new Uint8Array(ab));
             await ffmpeg.run('-i', 'input.caf', '-c:a', 'pcm_s16le', 'output.wav');
             let outData = ffmpeg.FS('readFile', 'output.wav');
@@ -408,10 +409,17 @@
             finalBuffer = await ctx.decodeAudioData(outData.buffer);
             await ctx.close();
         } catch (e) {
-            throw new Error("FFmpeg konverzija nije uspjela.");
+            throw new Error("FFmpeg procesiranje nije uspjelo.");
         } finally {
             try { ffmpeg.FS('unlink', 'input.caf'); } catch(e){}
             try { ffmpeg.FS('unlink', 'output.wav'); } catch(e){}
+            
+            // RAM FLUSH
+            if(window.ffmpegRunCount > 25 && window.ffmpegEngine) {
+                try { window.ffmpegEngine.exit(); } catch(e){}
+                window.ffmpegEngine = null;
+                window.ffmpegRunCount = 0;
+            }
         }
         return finalBuffer;
     }
@@ -427,24 +435,19 @@
         
         if(mode === 'mp3') tCh = Math.min(tCh, 2);
 
-        let decoded = null;
-
+        let decoded;
+        
         if(info.desc.fid === 0x616c6163) {
-            try {
-                let ctx = new (window.AudioContext || window.webkitAudioContext)();
-                decoded = await ctx.decodeAudioData(ab.slice(0));
-                await ctx.close();
-            } catch(e) {
-                writeLog(`[INFO] Aktiviram FFmpeg (Single Thread) za ALAC...`);
-                decoded = await runSoftwareFfmpegDecoder(ab);
-                if(mode === 'auto') tBits = 16;
-            }
-        } 
-        else {
+            // ALAC UVIJEK IDE PREKO FFMPEG-a DA SE IZBJEGNE MUXER CORRUPTION
+            writeLog(`[INFO] Koristim FFmpeg (Software Engine) za ALAC...`);
+            decoded = await runSoftwareFfmpegDecoder(ab);
+            if(mode === 'auto') tBits = 16;
+        } else {
             let ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: info.desc.sr });
             try {
-                if(info.desc.fid === 0x61616320) decoded = await ctx.decodeAudioData(wrapAAC(ab, info));
-                else if(info.desc.fid === 0x696d6134) {
+                if(info.desc.fid === 0x61616320) {
+                    decoded = await ctx.decodeAudioData(wrapAAC(ab, info));
+                } else if(info.desc.fid === 0x696d6134) {
                     let pcm16 = decodeIMA4(ab, info.dataOff, info.dataSz, info.desc.ch);
                     decoded = ctx.createBuffer(info.desc.ch, pcm16.length/info.desc.ch, info.desc.sr);
                     for(let c=0; c<info.desc.ch; c++) { let chD = decoded.getChannelData(c); for(let i=0; i<decoded.length; i++) chD[i] = pcm16[i*info.desc.ch + c] / 32768; }
@@ -452,16 +455,18 @@
                 } else {
                     decoded = await ctx.decodeAudioData(ab.slice(0));
                 }
-            } finally {
+            } catch(e) { 
                 if(ctx.state !== 'closed') await ctx.close();
+                throw new Error(`Audio dekoder ne podržava format datoteke.`); 
             }
+            if(ctx.state !== 'closed') await ctx.close(); 
         }
         
         let start = sTime !== null ? sTime : 0;
         let end = eTime !== null ? Math.min(eTime, decoded.duration) : decoded.duration;
         let finalDur = end - start;
         if(finalDur <= 0) finalDur = 0.1;
-        
+
         let offCtx = new OfflineAudioContext(tCh, Math.ceil(finalDur * tSr), tSr);
         let src = offCtx.createBufferSource(); src.buffer = decoded;
         let gainNode = offCtx.createGain(); gainNode.gain.value = tVol;
@@ -493,68 +498,6 @@
         return i16;
     }
 
-    function parseCAF(ab) {
-        let v = new DataView(ab), off=8, desc, dO, dS, pO=0;
-        let fileSize = ab.byteLength;
-        while(off < fileSize) {
-            if (off + 12 > fileSize) break; 
-            let type = v.getUint32(off); let rawSz = v.getBigInt64(off+4); let sz = rawSz === -1n ? (fileSize - (off + 12)) : Number(rawSz);
-            if (off + 12 + sz > fileSize) sz = fileSize - (off + 12);
-            
-            if(type === 0x64657363) { desc = { sr: v.getFloat64(off+12), fid: v.getUint32(off+20), bpp: v.getUint32(off+28), fpp: v.getUint32(off+32), ch: v.getUint32(off+36), bits: v.getUint32(off+40) }; }
-            if(type === 0x64617461) { dO = off+16; dS = sz-4; }
-            if(type === 0x70616b74) { pO = off+12; }
-            if(rawSz === -1n) break; off += 12 + sz;
-        }
-        if(!desc) throw new Error("Format nije podržan (Nedostaje desc chunk)");
-        if(!desc.bits || desc.bits === 0) desc.bits = 16;
-        return {desc, dataOff: dO, dataSz: dS, paktOff: pO};
-    }
-
-    function encodeToWav(ab, bits) {
-        let ch = ab.numberOfChannels, sr = ab.sampleRate, len = ab.length, isExt = (ch > 2 || bits > 16), hSz = isExt ? 68 : 44, ds = len * ch * (bits/8), b = new ArrayBuffer(hSz + ds), v = new DataView(b);
-        const s = (o, t) => { for(let i=0; i<t.length; i++) v.setUint8(o+i, t.charCodeAt(i)); };
-        s(0, 'RIFF'); v.setUint32(4, hSz - 8 + ds, true); s(8, 'WAVE'); s(12, 'fmt ');
-        v.setUint32(16, isExt ? 40 : 16, true); v.setUint16(20, isExt ? 0xFFFE : (bits===32?3:1), true);
-        v.setUint16(22, ch, true); v.setUint32(24, sr, true); v.setUint32(28, sr * ch * (bits/8), true); v.setUint16(32, ch * (bits/8), true); v.setUint16(34, bits, true);
-        if(isExt) { v.setUint16(36, 22, true); v.setUint16(38, bits, true); v.setUint32(40, (1 << ch) - 1, true); v.setUint32(44, bits === 32 ? 3 : 1, true); s(48, '\x10\x00\x80\x00\x00\xAA\x00\x38\x9B\x71'); s(60, 'data'); v.setUint32(64, ds, true); } else { s(36, 'data'); v.setUint32(40, ds, true); }
-        let off = hSz;
-        for(let i=0; i<len; i++) for(let c=0; c<ch; c++) {
-            let smp = Math.max(-1, Math.min(1, ab.getChannelData(c)[i]));
-            if(bits===16) { v.setInt16(off, smp<0?smp*32768:smp*32767, true); off+=2; }
-            else if(bits===32) { v.setFloat32(off, smp, true); off+=4; }
-            else { let s24 = Math.floor(smp * 8388607); v.setUint8(off, s24 & 0xFF); v.setUint8(off+1, (s24>>8)&0xFF); v.setUint8(off+2, (s24>>16)&0xFF); off+=3; }
-        } return b;
-    }
-
-    function wrapAAC(ab, info) {
-        let v = new DataView(ab), pkts =[];
-        if (info.desc.bpp > 0) { let nPkts = Math.floor(info.dataSz / info.desc.bpp); for(let i=0; i<nPkts; i++) pkts.push(info.desc.bpp); } 
-        else {
-            if (!info.paktOff || info.paktOff === 0) throw new Error("Nedostaje pakt chunk za VBR.");
-            let pPtr = info.paktOff + 24; let nPkts = Number(v.getBigInt64(info.paktOff));
-            if (nPkts <= 0 || nPkts > 5000000) throw new Error("Neispravan broj paketa.");
-            for(let i=0; i<nPkts; i++) { let s=0,b; do { b=v.getUint8(pPtr++); s=(s<<7)|(b&127); } while(b&128); pkts.push(s); }
-        }
-        let out = new Uint8Array(pkts.reduce((a,b)=>a+b+7, 0)), dP = info.dataOff, aP = 0, fI =[96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000].indexOf(info.desc.sr); if(fI===-1) fI=4;
-        for(let ps of pkts){
-            let fl = ps + 7; out[aP]=255; out[aP+1]=241; out[aP+2]=64|(fI<<2)|(info.desc.ch>>2); out[aP+3]=((info.desc.ch&3)<<6)|((fl>>11)&3); out[aP+4]=(fl>>3)&255; out[aP+5]=((fl&7)<<5)|31; out[aP+6]=252;
-            out.set(new Uint8Array(ab, dP, ps), aP+7); aP += fl; dP += ps;
-        } return out.buffer;
-    }
-
-    function decodeIMA4(b, o, s, ch) {
-        let v = new DataView(b), nP = Math.floor(s/(34*ch)), out = new Int16Array(nP*64*ch), steps =[7,8,9,10,11,12,13,14,16,17,19,21,23,25,28,31,34,37,41,45,50,55,60,66,73,80,88,97,107,118,130,143,157,173,190,209,230,253,279,307,337,371,408,449,494,544,598,658,724,796,876,963,1060,1166,1282,1411,1552,1707,1878,2066,2272,2499,2749,3024,3327,3660,4026,4428,4871,5358,5894,6484,7132,7845,8630,9493,10442,11487,12635,13899,15289,16818,18500,20350,22385,24623,27086,29794,32767], iO = o;
-        for(let p=0; p<nP; p++){
-            let st =[]; for(let c=0; c<ch; c++) { let h=v.getUint16(iO+c*34,false), pr=h&65408; if(pr&32768) pr-=65536; st.push({prd:pr,idx:h&127,ptr:iO+c*34+2}); }
-            for(let f=0; f<64; f++) for(let c=0; c<ch; c++){
-                let sT=st[c],nb=(f&1)?(v.getUint8(sT.ptr+(f>>1))>>4):(v.getUint8(sT.ptr+(f>>1))&15),df=steps[sT.idx]>>3;
-                if(nb&1) df+=steps[sT.idx]>>2; if(nb&2) df+=steps[sT.idx]>>1; if(nb&4) df+=steps[sT.idx];
-                if(nb&8) sT.prd-=df; else sT.prd+=df; sT.prd=Math.max(-32768,Math.min(32767,sT.prd));
-                sT.idx=Math.max(0,Math.min(88,sT.idx+[-1,-1,-1,-1,2,4,6,8][nb&7])); out[p*64*ch+f*ch+c]=sT.prd;
-            } iO+=34*ch;
-        } return out;
-    }
-</script>
-</body>
-</html>
+    // --- PAMETNI PAKET ČITAČ ---
+    function getPackets(v, info) {
+        let pkts =
