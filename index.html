@@ -1,1 +1,518 @@
 
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAF to WAV/MP3 PRO - CS</title>
+    <!-- LameJS za MP3 enkripciju unutar preglednika -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.all.min.js" crossorigin="anonymous"></script>
+    <style>
+        :root { --bg: #0f0f17; --fg: #cdd6f4; --acc: #a6e3a1; --acc-h: #94e2d5; --err: #f38ba8; --pnl: #1e1e2e; --blue: #89b4fa; --orange: #fab387; --teal: #89dceb; }
+        
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--fg); margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; width: 100vw; overflow-x: hidden; }
+        
+        #login-container { 
+            width: 100%; max-width: 480px; background: var(--pnl); padding: 50px; border-radius: 20px; 
+            box-shadow: 0 30px 100px rgba(0,0,0,0.9); text-align: center; box-sizing: border-box; border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        #app { width: 95%; max-width: 1100px; background: var(--pnl); padding: 35px; border-radius: 20px; box-shadow: 0 15px 50px rgba(0,0,0,0.7); display: none; margin: 40px auto; box-sizing: border-box; }
+        
+        h1 { margin: 0 0 25px 0; color: #fff; text-align: center; font-size: 30px; font-weight: 800; }
+        
+        .notes-box { background: rgba(137, 180, 250, 0.05); border: 1px solid rgba(137, 180, 250, 0.2); border-left: 4px solid var(--blue); border-radius: 8px; padding: 15px 20px; margin-bottom: 25px; font-size: 13px; color: #a6adc8; text-align: left; line-height: 1.6; }
+        .notes-box ul { margin: 10px 0 0 0; padding-left: 20px; }
+        .notes-box li { margin-bottom: 6px; }
+        .notes-box strong { color: var(--fg); }
+
+        .step { margin-bottom: 25px; padding: 25px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); }
+        .btn-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center; }
+        
+        button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: var(--acc); color: #111; border: none; padding: 12px 20px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.3s; font-size: 13px; text-transform: uppercase; }
+        button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); opacity: 0.9; }
+        button:disabled { background: #313244 !important; color: #585b70 !important; cursor: not-allowed; transform: none; box-shadow: none; border: none !important; }
+        
+        .btn-subtext { font-size: 10px; opacity: 0.85; font-weight: normal; text-transform: lowercase; letter-spacing: 0.5px; }
+
+        .login-input { width: 100%; padding: 20px; margin: 25px 0; border-radius: 10px; border: 2px solid #313244; background: #000; color: #fff; text-align: center; font-size: 24px; outline: none; transition: 0.3s; box-sizing: border-box; }
+        .login-input:focus { border-color: var(--acc); box-shadow: 0 0 20px rgba(166, 227, 161, 0.15); }
+        
+        textarea { width: 100%; height: 400px; background: #000; color: #a6adc8; border: 1px solid #313244; border-radius: 10px; padding: 15px; font-family: 'Consolas', monospace; font-size: 12px; line-height: 1.6; margin-top: 20px; white-space: pre; overflow-y: scroll; box-sizing: border-box; }
+        
+        progress { width: 100%; height: 26px; border-radius: 13px; appearance: none; margin-top: 20px; }
+        progress::-webkit-progress-bar { background: #11111b; border-radius: 13px; }
+        progress::-webkit-progress-value { background: var(--acc); border-radius: 13px; box-shadow: 0 0 15px var(--acc); }
+        
+        #adv-panel { display: none; margin-top: 25px; border-top: 1px solid #45475a; padding-top: 25px; }
+        .adv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .adv-item { display: flex; flex-direction: column; gap: 5px; }
+        .adv-item label { font-size: 12px; color: #fff; font-weight: 600; margin-bottom: 2px; }
+        .adv-item span.desc { font-size: 10px; color: #7f849c; margin-bottom: 5px; }
+        select, input[type="text"] { background: #111; color: #fff; border: 1px solid #45475a; padding: 10px; border-radius: 4px; font-size: 14px; outline: none; box-sizing: border-box; }
+        select:focus, input[type="text"]:focus { border-color: var(--blue); box-shadow: 0 0 5px rgba(137, 180, 250, 0.5); }
+        
+        .trim-section { margin-top: 20px; padding-top: 20px; border-top: 1px dashed #45475a; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .trim-title { grid-column: span 2; font-size: 14px; font-weight: bold; color: var(--blue); margin-bottom: -10px; }
+
+        .stats { display: flex; justify-content: space-between; margin-top: 12px; font-weight: 800; font-size: 16px; color: var(--blue); }
+
+        .action-group { display: flex; justify-content: center; align-items: center; gap: 20px; width: 100%; margin: 0; padding: 0; }
+        .action-group button { padding: 18px 45px; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+<div id="login-container">
+    <h1>CAF Converter PRO</h1>
+    <p style="color: #a6adc8;">Professional Audio Conversion Tool</p>
+    <input type="password" id="pass" class="login-input" placeholder="••••••••" onkeypress="if(event.key==='Enter') login()">
+    <button style="width:100%; flex-direction: row;" onclick="login()">PRISTUPI SUSTAVU</button>
+    <div id="err" style="color: var(--err); margin-top: 25px; display: none; font-weight: 800; font-size: 14px;">❌ LOZINKA NIJE TOČNA</div>
+</div>
+
+<div id="app">
+    <h1>CAF ➔ AUDIO PRO ENGINE</h1>
+    
+    <div class="notes-box">
+        <strong>Podržani formati i konverzije:</strong>
+        <ul>
+            <li><strong>WAV full automatic (1:1 PCM)</strong> – ALAC/CAF → WAV PCM, bez gubitaka, multikanalno (5.1 / 7.1)</li>
+            <li><strong>AAC direct copy</strong> – brza konverzija AAC streama u .aac kontejner (samo za CAF koji sadrži AAC audio)</li>
+            <li><strong>WAV PCM (custom)</strong> – konverzija u WAV s advanced postavkama (bit depth, sample rate, kanali)</li>
+            <li><strong>MP3</strong> – kompresija, maksimalno 2 kanala. Podržava ALAC i AAC izvor.</li>
+        </ul>
+    </div>
+
+    <div class="step">
+        <strong style="font-size: 18px;">1. Audio Engine & Format</strong><br>
+        
+        <div class="btn-group" style="margin-bottom: 15px;">
+            <button id="m-auto" onclick="setMode('auto')" style="border: 2px solid white; background: var(--blue); color: #fff;">
+                <span>WAV - FULL AUTOMATIC (1:1 PCM)</span>
+                <span class="btn-subtext">ALAC + AAC + LPCM + IMA4 | multikanalno</span>
+            </button>
+            <button id="m-copy" onclick="setMode('copy')" style="background: var(--teal); color: #111;">
+                <span>AAC - DIRECT COPY</span>
+                <span class="btn-subtext">samo CAF/AAC izvor | multikanalno</span>
+            </button>
+        </div>
+
+        <div class="btn-group">
+            <button id="m-pcm" onclick="setMode('pcm')" style="background: var(--acc); color: #111;">
+                <span>WAV PCM (CUSTOM)</span>
+                <span class="btn-subtext">ALAC + AAC + LPCM | multikanalno</span>
+            </button>
+            <button id="m-mp3" onclick="setMode('mp3')" style="background: var(--orange); color: #111;">
+                <span>MP3 (CUSTOM)</span>
+                <span class="btn-subtext">samo 2 kanala</span>
+            </button>
+        </div>
+
+        <div id="adv-toggle-box" style="display:none; margin-top:20px; text-align: center;">
+            <input type="checkbox" id="toggle-adv" onclick="toggleAdv()" style="cursor:pointer; transform:scale(1.2);"> 
+            <label style="display:inline; cursor:pointer; font-size:14px; color:#fff; margin-left:8px;" for="toggle-adv">Prikaži Advanced postavke (Ručno)</label>
+        </div>
+
+        <div id="adv-panel">
+            <div class="adv-grid">
+                <div class="adv-item" id="box-bitrate" style="display:none;">
+                    <label>Audio Bitrate</label>
+                    <span class="desc">Konstantni bitrate (kbps)</span>
+                    <input type="text" id="adv-br" placeholder="npr. 128, 192, 320" value="192">
+                </div>
+
+                <div class="adv-item" id="box-bit" style="display:none;">
+                    <label>Bit Depth</label>
+                    <span class="desc">Samo za WAV PCM</span>
+                    <select id="adv-bit"><option value="16">16-bit PCM</option><option value="24">24-bit PCM</option><option value="32">32-bit Float</option></select>
+                </div>
+                
+                <div class="adv-item">
+                    <label>Channels</label>
+                    <span class="desc">Upmix / Downmix kanala</span>
+                    <select id="adv-ch"><option value="0">no change</option><option value="1">mono</option><option value="2">stereo</option></select>
+                </div>
+
+                <div class="adv-item">
+                    <label>Volume</label>
+                    <span class="desc">Pojačanje ili stišavanje</span>
+                    <select id="adv-vol"><option value="1">no change</option><option value="1.25">+25%</option><option value="1.5">+50%</option><option value="2">+100%</option><option value="0.75">-25%</option><option value="0.5">-50%</option></select>
+                </div>
+
+                <div class="adv-item">
+                    <label>Sample Rate</label>
+                    <span class="desc">Frekvencija (Hz)</span>
+                    <select id="adv-hz"><option value="0">no change</option><option value="8000">8000 Hz</option><option value="11025">11025 Hz</option><option value="16000">16000 Hz</option><option value="22050">22050 Hz</option><option value="32000">32000 Hz</option><option value="44100">44100 Hz</option><option value="48000">48000 Hz</option><option value="88200">88200 Hz</option><option value="96000">96000 Hz</option></select>
+                </div>
+            </div>
+
+            <div class="trim-section">
+                <div class="trim-title">✂ Trim (Rezanje)</div>
+                <div class="adv-item"><label>Trim Start</label><span class="desc">Početak (HH:MM:SS ili sekunde)</span><input type="text" id="trim-start" placeholder="00:00:00"></div>
+                <div class="adv-item"><label>Trim End</label><span class="desc">Kraj (HH:MM:SS ili sekunde)</span><input type="text" id="trim-end" placeholder="00:00:00"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="step">
+        <strong style="font-size: 18px;">2. Folderi</strong>
+        <div class="action-group" style="margin-top: 15px;">
+            <button onclick="pickIn()" style="background: #313244; color: #fff; flex-direction: row; font-size: 13px; padding: 12px 20px;">📁 ODABERI INPUT FOLDER</button>
+            <button id="btn-out" onclick="pickOut()" disabled style="background: #313244; color: #fff; flex-direction: row; font-size: 13px; padding: 12px 20px;">📂 ODABERI OUTPUT FOLDER</button>
+        </div>
+        <div style="font-size:13px; margin-top:15px; color:var(--blue); text-align: center; font-weight: 600;"><span id="in-st">-</span> <span style="color:#fff">➔</span> <span id="out-st">-</span></div>
+    </div>
+
+    <div class="step" style="text-align: center; border:none; background:transparent; padding: 0;">
+        <div class="action-group">
+            <button id="btn-start" onclick="start()" disabled style="background:#a6e3a1; color:#111; flex-direction: row; box-shadow: 0 10px 25px rgba(166, 227, 161, 0.2);">▶ POKRENI KONVERZIJU</button>
+            <button id="btn-pause" onclick="pauseRequested=true" disabled style="background:#f38ba8; color:#111; flex-direction: row;">⏹ STOP</button>
+        </div>
+    </div>
+
+    <progress id="pb" value="0"></progress>
+    <div class="stats"><span id="p-txt">Nema aktivnih datoteka</span><span id="p-pct">0%</span></div>
+    <textarea id="log" readonly placeholder="Sistemski izvještaj i FFmpeg komande..."></textarea>
+</div>
+
+<script>
+    const HASH = "a4e2290d1179d849f9fc3058b9cd434b1a812925de5a2b5c91278bd9ae573bb4";
+
+    async function login() {
+        const val = document.getElementById('pass').value;
+        const msgUint8 = new TextEncoder().encode(val);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+        const hex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+        if (hex === HASH) {
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            document.body.style.alignItems = 'flex-start';
+        } else {
+            document.getElementById('err').style.display = 'block';
+            document.getElementById('pass').value = '';
+        }
+    }
+
+    let mode = 'auto', useAdv = false, inH = null, outH = null, files =[], processed = 0, pauseRequested = false;
+
+    function setMode(m){ 
+        mode = m; 
+        document.querySelectorAll('.btn-group button').forEach(b => { b.style.border = 'none'; if(!b.disabled) b.style.opacity = '0.6'; });
+        const activeBtn = document.getElementById('m-'+m);
+        if(activeBtn) { activeBtn.style.border = '2px solid white'; activeBtn.style.opacity = '1'; }
+        
+        let isCustom = (m === 'pcm' || m === 'mp3');
+        document.getElementById('adv-toggle-box').style.display = isCustom ? 'block' : 'none';
+        
+        if(!isCustom) {
+            document.getElementById('adv-panel').style.display = 'none';
+            document.getElementById('toggle-adv').checked = false;
+            useAdv = false;
+        } else {
+            document.getElementById('box-bit').style.display = (m === 'pcm') ? 'flex' : 'none';
+            document.getElementById('box-bitrate').style.display = (m === 'mp3') ? 'flex' : 'none';
+        }
+    }
+
+    function toggleAdv(){ useAdv = document.getElementById('toggle-adv').checked; document.getElementById('adv-panel').style.display = useAdv ? 'grid' : 'none'; }
+    function writeLog(m){ document.getElementById('log').value += m + "\n"; document.getElementById('log').scrollTop=99999; }
+
+    function parseTimecode(tc) {
+        if(!tc) return null; let parts = tc.split(':').map(Number);
+        if(parts.length === 3) return (parts[0]*3600) + (parts[1]*60) + parts[2];
+        if(parts.length === 2) return (parts[0]*60) + parts[1];
+        if(parts.length === 1) return parts[0];
+        return 0;
+    }
+
+    async function pickIn(){
+        try { inH = await window.showDirectoryPicker(); files =[]; writeLog(`[SKENIRANJE] Učitavam datoteke...`); await scan(inH, ''); document.getElementById('in-st').textContent = inH.name; document.getElementById('btn-out').disabled = false; writeLog(`[INFO] Mapirano ${files.length} datoteka.`); } catch(e) {}
+    }
+
+    async function scan(h, p){
+        for await(let e of h.values()){ 
+            if(e.kind === 'file' && e.name.toLowerCase().endsWith('.caf')) {
+                let fileObj = await e.getFile();
+                files.push({h: e, p: p, file: fileObj, done: false}); 
+            }
+            else if(e.kind === 'directory') await scan(e, p + e.name + '/'); 
+        }
+    }
+
+    async function pickOut(){ try { outH = await window.showDirectoryPicker({mode:'readwrite'}); document.getElementById('out-st').textContent = outH.name; document.getElementById('btn-start').disabled = false; } catch(e) {} }
+
+    function updateProgress(){ document.getElementById('pb').max = files.length; document.getElementById('pb').value = processed; document.getElementById('p-txt').textContent = `${processed} / ${files.length} datoteka`; document.getElementById('p-pct').textContent = `${Math.round((processed/files.length)*100)}%`; }
+
+    async function start(){
+        pauseRequested = false; document.getElementById('btn-start').disabled = true; document.getElementById('btn-pause').disabled = false;
+        writeLog("\n" + "=".repeat(100) + "\n" + " ".repeat(30) + "ZAPOČINJEM PROCES KONVERZIJE\n" + "=".repeat(100) + "\n");
+        
+        for(let i=0; i<files.length; i++){
+            if(pauseRequested) break;
+            let f = files[i]; if(f.done) continue;
+            
+            try {
+                let outExt = '.wav';
+                if(mode === 'mp3') outExt = '.mp3';
+                if(mode === 'copy') outExt = '.aac';
+                
+                let outName = f.h.name.replace(/\.caf$/i, outExt);
+                let targetDir = outH;
+                for(let seg of f.p.split('/').filter(x=>x)) targetDir = await targetDir.getDirectoryHandle(seg, {create:true});
+
+                try { await targetDir.getFileHandle(outName); writeLog(`[SKIP] Preskačem (već postoji): ${outName}`); f.done = true; processed++; updateProgress(); continue; } catch(e){}
+
+                let fileRaw = f.file;
+                let ab = await fileRaw.arrayBuffer();
+                let info = parseCAF(ab);
+                
+                let outBuffer, ffmpegCmd = "";
+                let sTime = useAdv ? parseTimecode(document.getElementById('trim-start').value) : null;
+                let eTime = useAdv ? parseTimecode(document.getElementById('trim-end').value) : null;
+                let trimCmd = (sTime !== null ? ` -ss ${document.getElementById('trim-start').value}` : "") + (eTime !== null ? ` -to ${document.getElementById('trim-end').value}` : "");
+
+                if (mode === 'copy') {
+                    if(info.desc.fid === 0x616c6163) throw new Error("Direct Copy nije moguć za ALAC (Apple Lossless) format jer će ostati neprepoznat. Molimo odaberite WAV ili MP3 mod.");
+                    if(info.desc.fid !== 0x61616320) throw new Error("Direct Copy AAC radi samo ako je izvorni CAF u AAC formatu.");
+                    
+                    outBuffer = wrapAAC(ab, info);
+                    ffmpegCmd = `ffmpeg${trimCmd} -i "${f.h.name}" -c:a copy "${outName}"`;
+                } else {
+                    const res = await smartDecode(ab, info, sTime, eTime, f.h.name);
+                    
+                    if (mode === 'mp3') {
+                        let br = parseInt(document.getElementById('adv-br').value) || 192;
+                        outBuffer = await encodeMp3(res.audioBuffer, br);
+                        ffmpegCmd = `ffmpeg${trimCmd} -i "${f.h.name}" -codec:a libmp3lame -b:a ${br}k -ar ${res.sr} -ac ${res.ch} "${outName}"`;
+                    } else {
+                        outBuffer = encodeToWav(res.audioBuffer, res.bits);
+                        let fmt = res.bits === 32 ? 'f32le' : (res.bits === 24 ? 's24le' : 's16le');
+                        ffmpegCmd = `ffmpeg${trimCmd} -i "${f.h.name}" -ar ${res.sr} -ac ${res.ch} -sample_fmt ${fmt} "${outName}"`;
+                    }
+                }
+
+                let fh = await targetDir.getFileHandle(outName, {create:true});
+                let wr = await fh.createWritable(); await wr.write(outBuffer); await wr.close();
+                
+                let repSr = useAdv && mode !== 'auto' && mode !== 'copy' && document.getElementById('adv-hz').value != "0" ? document.getElementById('adv-hz').value : info.desc.sr;
+                let repBits = mode === 'pcm' && useAdv ? document.getElementById('adv-bit').value : info.desc.bits;
+                let repCh = (mode==='mp3') ? Math.min(info.desc.ch,2) : info.desc.ch;
+
+                logMedia(f.h.name, fileRaw.size, info, outName, outBuffer.byteLength, repSr, repCh, repBits, ffmpegCmd, mode);
+                f.done = true; processed++; updateProgress();
+            } catch(e){ 
+                writeLog(`❌ GREŠKA (${f.h.name}): ${e.message}`);
+                
+                // OSIGURANJE OD LOKALNOG POKRETANJA FFMPEG-a
+                if(e.message.includes('file://')) {
+                    alert("SISTEMSKA BLOKADA: Windows Chrome ne dozvoljava otvaranje ALAC datoteka direktno s tvrdog diska.\n\nMolimo uploadajte ovaj HTML file na GitHub Pages ili ga pokrenite preko lokalnog servera (VS Code Live Server).");
+                    pauseRequested = true;
+                    break;
+                }
+            }
+            await new Promise(r => setTimeout(r, 10));
+        }
+        document.getElementById('btn-start').disabled = (processed === files.length);
+    }
+
+    function logMedia(oN, oS, oI, nN, nS, nSr, nCh, nBits, cmd, m) {
+        let oFmt = oI.desc.fid === 0x6c70636d ? "LPCM" : (oI.desc.fid === 0x696d6134 ? "IMA4" : (oI.desc.fid === 0x616c6163 ? "ALAC (Apple Lossless)" : "AAC"));
+        let nFmt = "PCM Waveformat";
+        if(m === 'copy') nFmt = "AAC (Direct Stream)";
+        if(m === 'mp3') nFmt = "MPEG Audio Layer 3";
+
+        const fS = (s) => s > 1048576 ? (s/1048576).toFixed(2)+" MB" : (s/1024).toFixed(2)+" KB";
+        
+        writeLog(`IZVOR: ${oN}  (${oFmt}, ${oI.desc.ch}ch, ${oI.desc.sr}Hz) ->[${fS(oS)}]`);
+        writeLog(`IZLAZ: ${nN}  (${nFmt}, ${nCh}ch, ${nSr}Hz) ->[${fS(nS)}]`);
+        writeLog(`FFMPEG: ${cmd}`);
+        writeLog("-".repeat(100));
+    }
+
+    async function runSoftwareFfmpegDecoder(ab, info, fName) {
+        if (window.location.protocol === 'file:') {
+            throw new Error("ALAC format zahtijeva FFmpeg dekoder. Chrome blokira FFmpeg kada se datoteka pokreće direktno s diska (putanja 'file://'). RJEŠENJE: Postavite aplikaciju na GitHub Pages ili pokrenite lokalni server!");
+        }
+        
+        if (!window.FFmpeg) {
+            writeLog(`[PREUZIMANJE] Učitavam FFmpeg jezgru (Samo prvi put)...`);
+            await new Promise((res, rej) => {
+                let script = document.createElement('script');
+                script.src = "https://unpkg.com/@ffmpeg/ffmpeg@0.9.6/dist/ffmpeg.min.js";
+                script.onload = res; script.onerror = () => rej(new Error("Neuspješno preuzimanje FFmpeg-a."));
+                document.head.appendChild(script);
+            });
+        }
+        
+        if (!window.ffmpegEngine) {
+            window.ffmpegEngine = FFmpeg.createFFmpeg({ log: false });
+        }
+        
+        if (!window.ffmpegEngine.isLoaded()) {
+            writeLog(`[INFO] Inicijaliziram FFmpeg. Ovo traje par sekundi...`);
+            try {
+                await window.ffmpegEngine.load();
+            } catch(e) {
+                window.ffmpegEngine = null; 
+                throw new Error("Neuspješno pokretanje FFmpeg jezgre. Provjerite vezu.");
+            }
+        }
+        
+        let ffmpeg = window.ffmpegEngine;
+        let finalBuffer = null;
+        try {
+            ffmpeg.FS('writeFile', 'input.caf', new Uint8Array(ab));
+            await ffmpeg.run('-i', 'input.caf', '-c:a', 'pcm_s16le', 'output.wav');
+            let outData = ffmpeg.FS('readFile', 'output.wav');
+            
+            let ctx = new (window.AudioContext || window.webkitAudioContext)();
+            finalBuffer = await ctx.decodeAudioData(outData.buffer);
+            await ctx.close();
+        } catch (e) {
+            throw new Error("FFmpeg konverzija nije uspjela. File je korumpiran.");
+        } finally {
+            try { ffmpeg.FS('unlink', 'input.caf'); } catch(e){}
+            try { ffmpeg.FS('unlink', 'output.wav'); } catch(e){}
+        }
+        return finalBuffer;
+    }
+
+    async function smartDecode(ab, info, sTime, eTime, fName) {
+        let tSr = info.desc.sr, tCh = info.desc.ch, tBits = info.desc.bits || 16, tVol = 1;
+        if(mode !== 'auto' && mode !== 'copy' && useAdv) {
+            if(document.getElementById('adv-hz').value != "0") tSr = parseInt(document.getElementById('adv-hz').value);
+            if(document.getElementById('adv-ch').value != "0") tCh = parseInt(document.getElementById('adv-ch').value);
+            if(mode === 'pcm') tBits = parseInt(document.getElementById('adv-bit').value);
+            tVol = parseFloat(document.getElementById('adv-vol').value);
+        }
+        
+        if(mode === 'mp3') tCh = Math.min(tCh, 2);
+
+        let decoded;
+        let ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: info.desc.sr });
+
+        try {
+            if(info.desc.fid === 0x61616320) {
+                decoded = await ctx.decodeAudioData(wrapAAC(ab, info));
+            } else if(info.desc.fid === 0x616c6163) {
+                if(ctx.state !== 'closed') await ctx.close();
+                writeLog(`[UPOZORENJE] Preglednik ne podržava nativni ALAC dekoder. Pokrećem FFmpeg Software Engine...`);
+                decoded = await runSoftwareFfmpegDecoder(ab, info, fName);
+                if(mode === 'auto') tBits = 16;
+            } else if(info.desc.fid === 0x696d6134) {
+                let pcm16 = decodeIMA4(ab, info.dataOff, info.dataSz, info.desc.ch);
+                decoded = ctx.createBuffer(info.desc.ch, pcm16.length/info.desc.ch, info.desc.sr);
+                for(let c=0; c<info.desc.ch; c++) { let chD = decoded.getChannelData(c); for(let i=0; i<decoded.length; i++) chD[i] = pcm16[i*info.desc.ch + c] / 32768; }
+                if(mode === 'auto') tBits = 16;
+            } else {
+                decoded = await ctx.decodeAudioData(ab.slice(0));
+            }
+        } catch(e) { 
+            if(ctx.state !== 'closed') await ctx.close();
+            throw e; 
+        }
+        
+        let start = sTime !== null ? sTime : 0;
+        let end = eTime !== null ? Math.min(eTime, decoded.duration) : decoded.duration;
+        let finalDur = end - start;
+        if(finalDur <= 0) finalDur = 0.1;
+
+        if(ctx.state !== 'closed') await ctx.close(); 
+        
+        let offCtx = new OfflineAudioContext(tCh, Math.ceil(finalDur * tSr), tSr);
+        let src = offCtx.createBufferSource(); src.buffer = decoded;
+        let gainNode = offCtx.createGain(); gainNode.gain.value = tVol;
+        
+        src.connect(gainNode); gainNode.connect(offCtx.destination);
+        src.start(0, start, finalDur);
+        decoded = await offCtx.startRendering();
+
+        return { audioBuffer: decoded, sr: tSr, ch: tCh, bits: tBits, duration: finalDur };
+    }
+
+    async function encodeMp3(audioBuffer, bitrate) {
+        const ch = audioBuffer.numberOfChannels; const sr = audioBuffer.sampleRate;
+        const mp3encoder = new lamejs.Mp3Encoder(ch, sr, bitrate); let mp3Data =[];
+        const left = convertToI16(audioBuffer.getChannelData(0));
+        const right = ch > 1 ? convertToI16(audioBuffer.getChannelData(1)) : left;
+        for (let i = 0; i < left.length; i += 1152) {
+            let lChunk = left.subarray(i, i + 1152); let rChunk = right.subarray(i, i + 1152);
+            let chunk = mp3encoder.encodeBuffer(lChunk, rChunk);
+            if (chunk.length > 0) mp3Data.push(chunk);
+        }
+        let final = mp3encoder.flush(); if (final.length > 0) mp3Data.push(final);
+        return new Blob(mp3Data).arrayBuffer();
+    }
+
+    function convertToI16(f32) {
+        let i16 = new Int16Array(f32.length);
+        for(let i=0; i<f32.length; i++) { let s = Math.max(-1, Math.min(1, f32[i])); i16[i] = s < 0 ? s * 32768 : s * 32767; }
+        return i16;
+    }
+
+    function parseCAF(ab) {
+        let v = new DataView(ab), off=8, desc, dO, dS, pO=0;
+        let fileSize = ab.byteLength;
+        while(off < fileSize) {
+            if (off + 12 > fileSize) break; 
+            let type = v.getUint32(off); let rawSz = v.getBigInt64(off+4); let sz = rawSz === -1n ? (fileSize - (off + 12)) : Number(rawSz);
+            if (off + 12 + sz > fileSize) sz = fileSize - (off + 12);
+            
+            if(type === 0x64657363) { desc = { sr: v.getFloat64(off+12), fid: v.getUint32(off+20), bpp: v.getUint32(off+28), fpp: v.getUint32(off+32), ch: v.getUint32(off+36), bits: v.getUint32(off+40) }; }
+            if(type === 0x64617461) { dO = off+16; dS = sz-4; }
+            if(type === 0x70616b74) { pO = off+12; }
+            if(rawSz === -1n) break; off += 12 + sz;
+        }
+        if(!desc) throw new Error("Format nije podržan (Nedostaje desc chunk)");
+        if(!desc.bits || desc.bits === 0) desc.bits = 16;
+        return {desc, dataOff: dO, dataSz: dS, paktOff: pO};
+    }
+
+    function encodeToWav(ab, bits) {
+        let ch = ab.numberOfChannels, sr = ab.sampleRate, len = ab.length, isExt = (ch > 2 || bits > 16), hSz = isExt ? 68 : 44, ds = len * ch * (bits/8), b = new ArrayBuffer(hSz + ds), v = new DataView(b);
+        const s = (o, t) => { for(let i=0; i<t.length; i++) v.setUint8(o+i, t.charCodeAt(i)); };
+        s(0, 'RIFF'); v.setUint32(4, hSz - 8 + ds, true); s(8, 'WAVE'); s(12, 'fmt ');
+        v.setUint32(16, isExt ? 40 : 16, true); v.setUint16(20, isExt ? 0xFFFE : (bits===32?3:1), true);
+        v.setUint16(22, ch, true); v.setUint32(24, sr, true); v.setUint32(28, sr * ch * (bits/8), true); v.setUint16(32, ch * (bits/8), true); v.setUint16(34, bits, true);
+        if(isExt) { v.setUint16(36, 22, true); v.setUint16(38, bits, true); v.setUint32(40, (1 << ch) - 1, true); v.setUint32(44, bits === 32 ? 3 : 1, true); s(48, '\x10\x00\x80\x00\x00\xAA\x00\x38\x9B\x71'); s(60, 'data'); v.setUint32(64, ds, true); } else { s(36, 'data'); v.setUint32(40, ds, true); }
+        let off = hSz;
+        for(let i=0; i<len; i++) for(let c=0; c<ch; c++) {
+            let smp = Math.max(-1, Math.min(1, ab.getChannelData(c)[i]));
+            if(bits===16) { v.setInt16(off, smp<0?smp*32768:smp*32767, true); off+=2; }
+            else if(bits===32) { v.setFloat32(off, smp, true); off+=4; }
+            else { let s24 = Math.floor(smp * 8388607); v.setUint8(off, s24 & 0xFF); v.setUint8(off+1, (s24>>8)&0xFF); v.setUint8(off+2, (s24>>16)&0xFF); off+=3; }
+        } return b;
+    }
+
+    function wrapAAC(ab, info) {
+        let v = new DataView(ab), pkts =[];
+        if (info.desc.bpp > 0) { let nPkts = Math.floor(info.dataSz / info.desc.bpp); for(let i=0; i<nPkts; i++) pkts.push(info.desc.bpp); } 
+        else {
+            if (!info.paktOff || info.paktOff === 0) throw new Error("Nedostaje pakt chunk za VBR.");
+            let pPtr = info.paktOff + 24; let nPkts = Number(v.getBigInt64(info.paktOff));
+            if (nPkts <= 0 || nPkts > 5000000) throw new Error("Neispravan broj paketa.");
+            for(let i=0; i<nPkts; i++) { let s=0,b; do { b=v.getUint8(pPtr++); s=(s<<7)|(b&127); } while(b&128); pkts.push(s); }
+        }
+        let out = new Uint8Array(pkts.reduce((a,b)=>a+b+7, 0)), dP = info.dataOff, aP = 0, fI =[96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000].indexOf(info.desc.sr); if(fI===-1) fI=4;
+        for(let ps of pkts){
+            let fl = ps + 7; out[aP]=255; out[aP+1]=241; out[aP+2]=64|(fI<<2)|(info.desc.ch>>2); out[aP+3]=((info.desc.ch&3)<<6)|((fl>>11)&3); out[aP+4]=(fl>>3)&255; out[aP+5]=((fl&7)<<5)|31; out[aP+6]=252;
+            out.set(new Uint8Array(ab, dP, ps), aP+7); aP += fl; dP += ps;
+        } return out.buffer;
+    }
+
+    function decodeIMA4(b, o, s, ch) {
+        let v = new DataView(b), nP = Math.floor(s/(34*ch)), out = new Int16Array(nP*64*ch), steps =[7,8,9,10,11,12,13,14,16,17,19,21,23,25,28,31,34,37,41,45,50,55,60,66,73,80,88,97,107,118,130,143,157,173,190,209,230,253,279,307,337,371,408,449,494,544,598,658,724,796,876,963,1060,1166,1282,1411,1552,1707,1878,2066,2272,2499,2749,3024,3327,3660,4026,4428,4871,5358,5894,6484,7132,7845,8630,9493,10442,11487,12635,13899,15289,16818,18500,20350,22385,24623,27086,29794,32767], iO = o;
+        for(let p=0; p<nP; p++){
+            let st =[]; for(let c=0; c<ch; c++) { let h=v.getUint16(iO+c*34,false), pr=h&65408; if(pr&32768) pr-=65536; st.push({prd:pr,idx:h&127,ptr:iO+c*34+2}); }
+            for(let f=0; f<64; f++) for(let c=0; c<ch; c++){
+                let sT=st[c],nb=(f&1)?(v.getUint8(sT.ptr+(f>>1))>>4):(v.getUint8(sT.ptr+(f>>1))&15),df=steps[sT.idx]>>3;
+                if(nb&1) df+=steps[sT.idx]>>2; if(nb&2) df+=steps[sT.idx]>>1; if(nb&4) df+=steps[sT.idx];
+                if(nb&8) sT.prd-=df; else sT.prd+=df; sT.prd=Math.max(-32768,Math.min(32767,sT.prd));
+                sT.idx=Math.max(0,Math.min(88,sT.idx+[-1,-1,-1,-1,2,4,6,8][nb&7])); out[p*64*ch+f*ch+c]=sT.prd;
+            } iO+=34*ch;
+        } return out;
+    }
+</script>
+</body>
+</html>
